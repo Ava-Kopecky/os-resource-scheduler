@@ -1,3 +1,6 @@
+import java.io.*;
+import java.util.Hashtable;
+
 class Disk
     // extends Thread
 {
@@ -15,7 +18,7 @@ class Disk
         try {
             Thread.sleep(DISK_DELAY); // sleeps for 80 ms for gradescoep auto grader
         } catch (InterruptedException e) {
-            println(e);
+            System.out.println(e);
         }
         sectors[sector].setLength(0);
         sectors[sector].append(data);
@@ -25,7 +28,7 @@ class Disk
         try {
             Thread.sleep(DISK_DELAY); // sleeps for 80 ms for gradescope auto grader
         } catch (InterruptedException e) {
-            println(e);
+            System.out.println(e);
         }
         data.setLength(0);
         data.append(sectors[sector]);
@@ -54,7 +57,7 @@ class Printer
         try {
             Thread.sleep(PRINT_DELAY);
         } catch (InterruptedException e) {
-            println(e);
+            System.out.println(e);
         }
 
         try {
@@ -72,13 +75,28 @@ class PrintJobThread
     extends Thread
 {
     StringBuffer line = new StringBuffer(); // only allowed one line to reuse for read from disk and print to printer
+    String fileToPrint;
 
     PrintJobThread(String fileToPrint)
     {
+        this.fileToPrint = fileToPrint;
     }
 
     public void run()
     {
+        StringBuffer stringFile = new StringBuffer(fileToPrint);
+        FileInfo data = directory.lookup(stringFile);
+
+        if (data != null) {
+            int dN = data.diskNumber;
+            int sS = data.startingSector;
+            int fL = data.fileLength;
+            for (int i = sS; i < sS + fL; i++) {
+                disk.read(i, line);
+                printer.print(line);
+            }
+        }
+
     }
 }
 

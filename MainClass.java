@@ -2,15 +2,33 @@ class Disk
     // extends Thread
 {
     static final int NUM_SECTORS = 2048;
+    static final int DISK_DELAY = 80;
     StringBuffer sectors[] = new StringBuffer[NUM_SECTORS];
-    Disk()
+    Disk() 
     {
+        for (int i = 0; i < NUM_SECTORS; i++) {
+            sectors[i] = new StringBuffer();
+        }
     }
     void write(int sector, StringBuffer data)  // call sleep
     {
+        try {
+            Thread.sleep(DISK_DELAY); // sleeps for 80 ms for gradescoep auto grader
+        } catch (InterruptedException e) {
+            println(e);
+        }
+        sectors[sector].setLength(0);
+        sectors[sector].append(data);
     }
     void read(int sector, StringBuffer data)   // call sleep
     {
+        try {
+            Thread.sleep(DISK_DELAY); // sleeps for 80 ms for gradescope auto grader
+        } catch (InterruptedException e) {
+            println(e);
+        }
+        data.setLength(0);
+        data.append(sectors[sector]);
     }
 }
 

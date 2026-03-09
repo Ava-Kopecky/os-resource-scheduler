@@ -45,7 +45,7 @@ class Printer
     {
         this.id = id;
         try {
-            writer = new BufferedWriter(new FileWriter("PRINTER" + id, true));
+            writer = new BufferedWriter(new FileWriter("PRINTER" + id));
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -83,21 +83,24 @@ class PrintJobThread
     }
 
     public void run()
-    {
-        StringBuffer stringFile = new StringBuffer(fileToPrint);
-        FileInfo data = directory.lookup(stringFile);
+{
+    StringBuffer stringFile = new StringBuffer(fileToPrint);
+    FileInfo data = MainClass.directory.lookup(stringFile);
 
-        if (data != null) {
-            int dN = data.diskNumber;
-            int sS = data.startingSector;
-            int fL = data.fileLength;
+    if (data != null) {
+        int dN = data.diskNumber;
+        int sS = data.startingSector;
+        int fL = data.fileLength;
+
+        synchronized (MainClass.printers[0]) {
             for (int i = sS; i < sS + fL; i++) {
-                disk.read(i, line);
-                printer.print(line);
+                MainClass.disks[dN].read(i, line);
+                MainClass.printers[0].print(line);
             }
         }
-
     }
+
+}
 }
 
 class FileInfo
@@ -158,12 +161,16 @@ class UserThread
     public void run()
     {
         try {
-            reader = new BufferedReader(new FileReader("USER" + id));
+            try {
+                reader = new BufferedReader(new FileReader("users/USER" + id));
+            } catch (IOException e) {
+                reader = new BufferedReader(new FileReader("USER" + id));
+            }
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(".save")) {
-                    currentFileName = new StringBuffer(line.substring(6));
-                    startSector = nextFreeSector;
+                    currentFileName = new StringBuffer(line.substring(6).trim());
+                    startSector = MainClass.nextFreeSector;
                     fileLength = 0;
                     currentlyWriting = true;
                     continue;
@@ -172,19 +179,25 @@ class UserThread
                     info.diskNumber = 0; // CHANGE WHEN DOING HW9 CAUSE HW1 ONYL HAS 1 DISK!
                     info.startingSector = startSector;
                     info.fileLength = fileLength;
-                    directory.enter(currentFileName, info);
+                    MainClass.directory.enter(currentFileName, info);
                     currentlyWriting = false;
                     continue;
                 } else if (line.startsWith(".print")) {
                     String fileToPrint = line.substring(7).trim();
+
                     PrintJobThread job = new PrintJobThread(fileToPrint);
                     job.start();
+                    try {
+                        job.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     continue;
                 }
 
                 if (currentlyWriting == true) {
-                    disk.write(nextFreeSector, new StringBuffer(line));
-                    nextFreeSector++;
+                    MainClass.disks[0].write(MainClass.nextFreeSector, new StringBuffer(line));
+                    MainClass.nextFreeSector++;
                     fileLength++;
                 }
             }
@@ -198,8 +211,28 @@ class UserThread
 
 public class MainClass
 {
+    static Disk[] disks;
+    static Printer[] printers;
+    static DirectoryManager directory;
+    static int nextFreeSector = 0;
+
     public static void main(String args[])
     {
+        disks = new Disk[1];
+        disks[0] = new Disk();
+        printers = new Printer[1];
+        printers[0] = new Printer(0);
+        directory = new DirectoryManager();
+
+        UserThread user0 = new UserThread(0);
+        user0.start();
+
+        try {
+            user0.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
         for (int i=0; i<args.length; ++i)
             System.out.println("Args[" + i + "] = " + args[i]);
             

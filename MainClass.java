@@ -126,9 +126,12 @@ class PrinterManager
 class UserThread
     extends Thread
 {
+    StringBuffer currentFileName;
+    int startSector;
+    int fileLength;
     int id;
-    BufferedReader reader;
     boolean currentlyWriting = false;
+    BufferedReader reader;
     UserThread(int id) // my commands come from an input file with name USERi where i is my user id
     {
         this.id = id;
@@ -141,15 +144,30 @@ class UserThread
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(".save")) {
+                    currentFileName = new StringBuffer(line.substring(6));
+                    startSector = nextFreeSector;
+                    fileLength = 0;
                     currentlyWriting = true;
+                    continue;
                 } else if (line.startsWith(".end")) {
+                    FileInfo info = new FileInfo();
+                    info.diskNumber = 0; // CHANGE WHEN DOING HW9 CAUSE HW1 ONYL HAS 1 DISK!
+                    info.startingSector = startSector;
+                    info.fileLength = fileLength;
+                    directory.enter(currentFileName, info);
                     currentlyWriting = false;
+                    continue;
                 } else if (line.startsWith(".print")) {
-                    // call PrintjobThread
+                    String fileToPrint = line.substring(7).trim();
+                    PrintJobThread job = new PrintJobThread(fileToPrint);
+                    job.start();
+                    continue;
                 }
 
-                if (currentlyWriting = true) {
-                    //save line to sector in disk
+                if (currentlyWriting == true) {
+                    disk.write(nextFreeSector, new StringBuffer(line));
+                    nextFreeSector++;
+                    fileLength++;
                 }
             }
         }

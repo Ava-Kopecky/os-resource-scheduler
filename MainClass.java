@@ -35,12 +35,36 @@ class Disk
 class Printer
     // extends Thread
 {
+    static final int PRINT_DELAY = 275;
+    int id;
+    BufferedWriter writer;
     Printer(int id)
     {
+        this.id = id;
+        try {
+            writer = new BufferedWriter(new FileWriter("PRINTER" + id, true));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void print(StringBuffer data)  // call sleep
     {
+        try {
+            Thread.sleep(PRINT_DELAY);
+        } catch (InterruptedException e) {
+            println(e);
+        }
+
+        try {
+            writer.write(data.toString());
+            writer.newLine();
+            writer.flush();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 

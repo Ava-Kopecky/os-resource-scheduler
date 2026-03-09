@@ -91,7 +91,7 @@ class FileInfo
 
 class DirectoryManager
 {
-    // private Hashtable<String, FileInfo> T = new Hashtable<String, FileInfo>();
+    private Hashtable<String, FileInfo> T = new Hashtable<String, FileInfo>();
 
     DirectoryManager()
     {
@@ -99,11 +99,15 @@ class DirectoryManager
 
     void enter(StringBuffer fileName, FileInfo file)
     {
+        String validFileName = fileName.toString();
+        T.put(validFileName, file);
     }
 
     FileInfo lookup(StringBuffer fileName)
     {
-        return null;
+        String validFileName = fileName.toString();
+        FileInfo value = T.get(validFileName);
+        return value;
     }
 }
 
@@ -122,12 +126,36 @@ class PrinterManager
 class UserThread
     extends Thread
 {
+    int id;
+    BufferedReader reader;
+    boolean currentlyWriting = false;
     UserThread(int id) // my commands come from an input file with name USERi where i is my user id
     {
+        this.id = id;
     }
 
     public void run()
     {
+        try {
+            reader = new BufferedReader(new FileReader("USER" + id));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(".save")) {
+                    currentlyWriting = true;
+                } else if (line.startsWith(".end")) {
+                    currentlyWriting = false;
+                } else if (line.startsWith(".print")) {
+                    // call PrintjobThread
+                }
+
+                if (currentlyWriting = true) {
+                    //save line to sector in disk
+                }
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

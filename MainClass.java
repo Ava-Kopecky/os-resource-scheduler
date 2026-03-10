@@ -92,12 +92,13 @@ class PrintJobThread
         int sS = data.startingSector;
         int fL = data.fileLength;
 
-        synchronized (MainClass.printers[0]) {
-            for (int i = sS; i < sS + fL; i++) {
-                MainClass.disks[dN].read(i, line);
-                MainClass.printers[0].print(line);
-            }
+        int printerIndex = MainClass.printerManager.request();
+
+        for (int i = sS; i < sS + fL; i++) {
+            MainClass.disks[dN].read(i, line);
+            MainClass.printers[printerIndex].print(line);
         }
+        MainClass.printerManager.release(printerIndex);
     }
 
 }
@@ -169,8 +170,10 @@ class DiskManager
 {
 }
 
-class PrinterManager
-{
+class PrinterManager extends ResourceManager {
+    PrinterManager(int numberOfPrinters) {
+        super(numberOfPrinters);
+    }
 }
 
 class UserThread
@@ -244,6 +247,7 @@ public class MainClass
     static Printer[] printers;
     static DirectoryManager directory;
     static int nextFreeSector = 0;
+    static PrinterManager printerManager;
 
     public static void main(String args[])
     {
@@ -252,6 +256,7 @@ public class MainClass
         printers = new Printer[1];
         printers[0] = new Printer(0);
         directory = new DirectoryManager();
+        printerManager = new PrinterManager(printers.length);
 
         UserThread user0 = new UserThread(0);
         user0.start();

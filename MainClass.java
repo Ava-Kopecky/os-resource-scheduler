@@ -166,8 +166,12 @@ class ResourceManager
     }
 }
 
-class DiskManager
-{
+class DiskManager extends ResourceManager {
+    int[] nextFreeSector;
+    DiskManager(int numberOfDisks) {
+        super(numberOfDisks);
+        nextFreeSector = new int[numberOfDisks];
+    }
 }
 
 class PrinterManager extends ResourceManager {
@@ -182,6 +186,7 @@ class UserThread
     StringBuffer currentFileName;
     int startSector;
     int fileLength;
+    int currentDisk;
     int id;
     boolean currentlyWriting = false;
     BufferedReader reader;
@@ -202,16 +207,18 @@ class UserThread
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(".save")) {
                     currentFileName = new StringBuffer(line.substring(6).trim());
-                    startSector = MainClass.nextFreeSector;
+                    currentDisk = MainClass.diskManager.request();
+                    startSector = MainClass.diskManager.nextFreeSector[currentDisk];
                     fileLength = 0;
                     currentlyWriting = true;
                     continue;
                 } else if (line.startsWith(".end")) {
                     FileInfo info = new FileInfo();
-                    info.diskNumber = 0; // CHANGE WHEN DOING HW9 CAUSE HW1 ONYL HAS 1 DISK!
+                    info.diskNumber = currentDisk;
                     info.startingSector = startSector;
                     info.fileLength = fileLength;
                     MainClass.directory.enter(currentFileName, info);
+                    MainClass.diskManager.release(currentDisk); 
                     currentlyWriting = false;
                     continue;
                 } else if (line.startsWith(".print")) {
@@ -228,8 +235,8 @@ class UserThread
                 }
 
                 if (currentlyWriting == true) {
-                    MainClass.disks[0].write(MainClass.nextFreeSector, new StringBuffer(line));
-                    MainClass.nextFreeSector++;
+                    MainClass.disks[currentDisk].write(MainClass.diskManager.nextFreeSector[currentDisk], new StringBuffer(line));
+                    MainClass.diskManager.nextFreeSector[currentDisk]++;
                     fileLength++;
                 }
             }
@@ -246,7 +253,7 @@ public class MainClass
     static Disk[] disks;
     static Printer[] printers;
     static DirectoryManager directory;
-    static int nextFreeSector = 0;
+    static DiskManager diskManager;
     static PrinterManager printerManager;
 
     public static void main(String args[])
@@ -256,6 +263,7 @@ public class MainClass
         printers = new Printer[1];
         printers[0] = new Printer(0);
         directory = new DirectoryManager();
+        diskManager = new DiskManager(disks.length);
         printerManager = new PrinterManager(printers.length);
 
         UserThread user0 = new UserThread(0);

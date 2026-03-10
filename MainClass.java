@@ -257,28 +257,39 @@ public class MainClass
     static PrinterManager printerManager;
 
     public static void main(String args[])
-    {
-        disks = new Disk[1];
-        disks[0] = new Disk();
-        printers = new Printer[1];
-        printers[0] = new Printer(0);
-        directory = new DirectoryManager();
-        diskManager = new DiskManager(disks.length);
-        printerManager = new PrinterManager(printers.length);
+{
+    int numUsers = Integer.parseInt(args[0].substring(1));
+    int numDisks = Integer.parseInt(args[1].substring(1));
+    int numPrinters = Integer.parseInt(args[2].substring(1));
+    directory = new DirectoryManager();
+    diskManager = new DiskManager(numDisks);
+    printerManager = new PrinterManager(numPrinters);
 
-        UserThread user0 = new UserThread(0);
-        user0.start();
+    disks = new Disk[numDisks];
+    for (int i = 0; i < numDisks; i++) {
+        disks[i] = new Disk();
+    }
 
+    printers = new Printer[numPrinters];
+    for (int i = 0; i < numPrinters; i++) {
+        printers[i] = new Printer(i);
+    }
+
+    UserThread[] users = new UserThread[numUsers];
+    for (int i = 0; i < numUsers; i++) {
+        users[i] = new UserThread(i);
+        users[i].start();
+    }
+
+    for (int i = 0; i < numUsers; i++) {
         try {
-            user0.join();
+            users[i].join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
-        for (int i=0; i<args.length; ++i)
-            System.out.println("Args[" + i + "] = " + args[i]);
-            
-        System.out.println("*** 141 OS Simulation ***");
     }
+
+    System.out.println("*** 141 OS Simulation ***");
+}
 }
 

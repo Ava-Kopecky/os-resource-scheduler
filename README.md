@@ -31,9 +31,9 @@ DirectoryManager — maps filenames to disk locations (disk number, start sector
 
 javac MainClass.java
 java MainClass -u3 -d2 -p2
- -u = number of users
- -d = number of disks
- -p = number of printers
+*-u* = number of users
+*-d* = number of disks
+*-p* = number of printers
 User command files should be placed in a users/ directory named USER0, USER1, etc.
 
 ## Concepts Demonstrated
